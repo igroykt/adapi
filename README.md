@@ -5,12 +5,22 @@ Active Directory библиотека для Python
 ```
 from adapi import ADApi
 
-adapi = ADApi("ldap://server_ip", "username", "password", "dc=example,dc=com", "cn=Users,dc=example,dc=com")
+adapi = ADApi("ldap://server_ip",
+                "username",
+                "password",
+                "dc=example,dc=com",
+                "cn=Users,dc=example,dc=com"
+            )
 ```
 
 ## Пример
 ```
-adapi = ADApi("ldap://192.168.1.100", "test", "123123", "dc=contoso,dc=com", "cn=Users,dc=contoso,dc=com")
+adapi = ADApi("ldap://192.168.1.100",
+                "test",
+                "123123",
+                "dc=contoso,dc=com",
+                "cn=Users,dc=contoso,dc=com"
+            )
 con = adapi.connect()
 username = adapi.get_username(con, "test2")
 adapi.disconnect(con)

@@ -2,7 +2,7 @@
 Active Directory библиотека для Python
 
 ## Инициализация
-```
+```python
 from adapi import ADApi
 
 adapi = ADApi("ldap://server_ip",
@@ -14,7 +14,7 @@ adapi = ADApi("ldap://server_ip",
 ```
 
 ## Пример
-```
+```python
 adapi = ADApi("ldap://192.168.1.100",
                 "test",
                 "123123",

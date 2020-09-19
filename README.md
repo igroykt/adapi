@@ -29,9 +29,9 @@ print(username)
 
 ## Методы
 * connect() -> подключение к базе данных
-* disconnect() -> отключение базы данных
-* is_user(<login>) -> проверка пользователя на существование/блокировку
-* is_authenticated(<login>) -> проверка на аутентификацию
-* get_username(<login>) -> запрос имени пользователя
-* get_userdn(<login>) -> запрос полного имени пользователя
-* get_usermail(<login>) -> запрос почты пользователя
+* disconnect(handler) -> отключение базы данных
+* is_user(handler, login) -> проверка пользователя на существование/блокировку
+* is_authenticated(login, password) -> проверка на аутентификацию
+* get_username(handler, login) -> запрос имени пользователя
+* get_userdn(handler, login) -> запрос полного имени пользователя
+* get_usermail(handler, login) -> запрос почты пользователя

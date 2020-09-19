@@ -38,10 +38,10 @@ print(f"Name: {username} Email: {usermail}")
 ```
 
 ## Методы
-* connect() -> подключение к базе данных
-* disconnect(handler) -> отключение базы данных
-* is_user(handler, login) -> проверка пользователя на существование/блокировку
-* is_authenticated(login, password) -> проверка на аутентификацию
-* get_name(handler, login) -> запрос имени пользователя
-* get_fullname(handler, login) -> запрос полного имени пользователя
-* get_mail(handler, login) -> запрос почты пользователя
+* connect() none -> подключение к базе данных
+* disconnect(handler) none -> отключение базы данных
+* is_user(handler, login) bool -> проверка пользователя на существование/блокировку
+* is_authenticated(login, password) bool -> проверка на аутентификацию
+* get_name(handler, login) string -> запрос имени пользователя
+* get_fullname(handler, login) string -> запрос полного имени пользователя
+* get_mail(handler, login) string -> запрос почты пользователя

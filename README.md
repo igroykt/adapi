@@ -1,4 +1,4 @@
-# adapi-py
+# ADApi
 Active Directory библиотека для Python
 
 ## Зависимости

@@ -1,6 +1,15 @@
 # adapi-py
 Active Directory библиотека для Python
 
+## Зависимости
+* Python 3.x
+
+## Установка
+```
+git clone https://github.com/igroykt/adapi
+pip3 install -r adapi/requirements.txt
+```
+
 ## Инициализация
 ```python
 from adapi import ADApi

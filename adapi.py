@@ -110,13 +110,13 @@ class ADApi:
                     return obj
         return False
 
-    def get_username(self, con, login):
+    def get_name(self, con, login):
         username = self.get_data(con, login, "givenName")
         if username:
             return username
         return False
 
-    def get_userdn(self, con, login):
+    def get_fullname(self, con, login):
         userdn = self.get_data(con, login, "distinguishedName")
         userdn = userdn.split(",")
         userdn = userdn[0].split("=")
@@ -125,7 +125,7 @@ class ADApi:
             return userdn
         return False
 
-    def get_usermail(self, con, login):
+    def get_mail(self, con, login):
         mail = self.get_data(con, login, "mail")
         if mail:
             return mail

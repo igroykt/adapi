@@ -5,6 +5,7 @@ import ldap
 import ldap.sasl
 import ast
 import datetime
+from OpenSSL import crypto
 
 class ADApi:
     ldap_server = ""
@@ -203,7 +204,7 @@ class ADApi:
         try:
             count = self.get_data(con, login, "badPwdCount")
             count = count[0].decode("utf-8")
-            return count
+            return int(count)
         except Exception:
             return False
         return False
@@ -257,8 +258,52 @@ class ADApi:
             return False
         return False
 
+    def get_expires(self, con, login):
+        try:
+            timestamp = self.get_data(con, login, "accountExpires")
+            timestamp = timestamp[0].decode("utf-8")
+            timestamp = (int(timestamp) / 10000000) - 11644473600
+            expires = datetime.datetime.fromtimestamp(timestamp)
+            expires = expires.strftime('%H:%M:%S %d-%m-%Y')
+            if expires:
+                return expires
+        except Exception:
+            return False
+        return False
+
+    def get_logincount(self, con, login):
+        try:
+            count = self.get_data(con, login, "logonCount")
+            count = count[0].decode("utf-8")
+            return int(count)
+        except Exception:
+            return False
+        return False
+
+    def get_login(self, con, login):
+        try:
+            login = self.get_data(con, login, "sAMAccountName")
+            login = login[0].decode("utf-8")
+            if login:
+                return login
+        except Exception:
+            return False
+        return False
+
+    def get_phonenumber(self, con, login):
+        try:
+            mobile = self.get_data(con, login, "mobile")
+            mobile = mobile[0].decode("utf-8")
+            if mobile:
+                return mobile
+        except Exception:
+            return False
+        return False
+
     def get_certs(self, con, login):
         certs = self.get_data(con, login, "userCertificate")
+        for cert in certs:
+            print(type(cert))
         if certs:
             return certs
         return False

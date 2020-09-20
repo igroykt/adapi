@@ -49,3 +49,7 @@ print(f"Name: {username} Email: {usermail}")
 * get_created(handler, login) string -> дата регистрации пользователя
 * get_changed(handler, login) string -> дата изменения пользователя
 * get_groups(handler, login) list -> список групп пользователя
+* get_failcount(handler, login) int -> число неудачных попыток аутентификации
+* get_lastfail(handler, login) string -> дата последней неудачной аутентификации
+* get_lastlogin(handler, login) string -> дата последней аутентификации
+* get_lastpwdset(handler, login) string -> дата последней установки пароля

@@ -42,6 +42,10 @@ print(f"Name: {username} Email: {usermail}")
 * disconnect(handler) none -> отключение базы данных
 * is_user(handler, login) bool -> проверка пользователя на существование/блокировку
 * is_authenticated(login, password) bool -> проверка на аутентификацию
-* get_name(handler, login) string -> запрос имени пользователя
-* get_fullname(handler, login) string -> запрос полного имени пользователя
-* get_mail(handler, login) string -> запрос почты пользователя
+* get_name(handler, login) string -> имя пользователя
+* get_fullname(handler, login) string -> полное имя
+* get_mail(handler, login) string -> адрес почты
+* get_description(handler, login) string -> описание
+* get_created(handler, login) string -> дата регистрации пользователя
+* get_changed(handler, login) string -> дата изменения пользователя
+* get_groups(handler, login) list -> список групп пользователя

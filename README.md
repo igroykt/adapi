@@ -58,3 +58,4 @@ print(f"Name: {username} Email: {usermail}")
 * get_logincount(handler, login) int -> количество аутентификаций
 * get_login(handler, login) string -> логин пользователя
 * get_phonenumber(handler, login) string -> номер телефона пользователя
+* get_certificate(handler, login, action {subject, serial, dump}) list -> запрос субъекта, серийного номера, дампа сертификатов пользователя

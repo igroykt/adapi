@@ -33,8 +33,11 @@ adapi = ADApi("ldap://192.168.1.100",
 con = adapi.connect()
 username = adapi.get_name(con, "test2")
 usermail = adapi.get_mail(con, "test2")
+dumpcerts = adapi.get_certificate(con, "test2", "dump")
 adapi.disconnect(con)
 print(f"Name: {username} Email: {usermail}")
+for dump in dumpcerts:
+    print(dump)
 ```
 
 ## Методы
@@ -58,4 +61,4 @@ print(f"Name: {username} Email: {usermail}")
 * get_logincount(handler, login) int -> количество аутентификаций
 * get_login(handler, login) string -> логин пользователя
 * get_phonenumber(handler, login) string -> номер телефона пользователя
-* get_certificate(handler, login, action {subject, serial, dump}) list -> запрос субъекта, серийного номера, дампа сертификатов пользователя
+* get_certificate(handler, login, action {subject, serial, dump}) list -> запрос субъекта, серийного номера, дампа сертификатов пользователя в формате DER

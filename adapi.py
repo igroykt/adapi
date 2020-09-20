@@ -300,10 +300,22 @@ class ADApi:
             return False
         return False
 
-    def get_certs(self, con, login):
-        certs = self.get_data(con, login, "userCertificate")
-        for cert in certs:
-            print(type(cert))
-        if certs:
-            return certs
+    def get_certificate(self, con, login, action):
+        try:
+            certs = self.get_data(con, login, "userCertificate")
+            data = []
+            for cert in certs:
+                x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, cert)
+                if not x509.has_expired():
+                    if "subject" in action:
+                        data.append(x509.get_subject())
+                    if "serial" in action:
+                        data.append(x509.get_serial_number())
+                    if "dump" in action:
+                        der = crypto.dump_certificate(crypto.FILETYPE_PEM, x509)
+                        data.append(der.decode("utf-8"))
+            if data:
+                return data
+        except Exception:
+            return False
         return False

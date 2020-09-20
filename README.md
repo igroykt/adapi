@@ -42,6 +42,7 @@ print(f"Name: {username} Email: {usermail}")
 * disconnect(handler) none -> отключение базы данных
 * is_user(handler, login) bool -> проверка пользователя на существование/блокировку
 * is_authenticated(login, password) bool -> проверка на аутентификацию
+* is_admin(handler, login) bool -> состоит ли пользователь в административных группах
 * get_name(handler, login) string -> имя пользователя
 * get_fullname(handler, login) string -> полное имя
 * get_mail(handler, login) string -> адрес почты
@@ -53,3 +54,7 @@ print(f"Name: {username} Email: {usermail}")
 * get_lastfail(handler, login) string -> дата последней неудачной аутентификации
 * get_lastlogin(handler, login) string -> дата последней аутентификации
 * get_lastpwdset(handler, login) string -> дата последней установки пароля
+* get_expires(handler, login) string -> дата истечения срока аккаунта (False значит "никогда")
+* get_logincount(handler, login) int -> количество аутентификаций
+* get_login(handler, login) string -> логин пользователя
+* get_phonenumber(handler, login) string -> номер телефона пользователя

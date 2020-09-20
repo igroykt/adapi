@@ -120,62 +120,142 @@ class ADApi:
         return False
 
     def get_name(self, con, login):
-        username = self.get_data(con, login, "givenName")
-        username = username[0].decode("utf-8")
-        if username:
-            return username
+        try:
+            username = self.get_data(con, login, "givenName")
+            username = username[0].decode("utf-8")
+            if username:
+                return username
+        except Exception:
+            return False
         return False
 
     def get_fullname(self, con, login):
-        userdn = self.get_data(con, login, "distinguishedName")
-        userdn = userdn[0].decode("utf-8")
-        userdn = userdn.split(",")
-        userdn = userdn[0].split("=")
-        userdn = userdn[1]
-        if userdn:
-            return userdn
+        try:
+            userdn = self.get_data(con, login, "distinguishedName")
+            userdn = userdn[0].decode("utf-8")
+            userdn = userdn.split(",")
+            userdn = userdn[0].split("=")
+            userdn = userdn[1]
+            if userdn:
+                return userdn
+        except Exception:
+            return False
         return False
 
     def get_mail(self, con, login):
-        mail = self.get_data(con, login, "mail")
-        mail = mail[0].decode("utf-8")
-        if mail:
-            return mail
+        try:
+            mail = self.get_data(con, login, "mail")
+            mail = mail[0].decode("utf-8")
+            if mail:
+                return mail
+        except Exception:
+            return False
         return False
 
     def get_description(self, con, login):
-        desc = self.get_data(con, login, "description")
-        desc = desc[0].decode("utf-8")
-        if desc:
-            return desc
+        try:
+            desc = self.get_data(con, login, "description")
+            desc = desc[0].decode("utf-8")
+            if desc:
+                return desc
+        except Exception:
+            return False
         return False
 
     def get_created(self, con, login):
-        timestamp = self.get_data(con, login, "whenCreated")
-        timestamp = timestamp[0].decode("utf-8")
-        when = self.convert_ldaptimestamp(timestamp)
-        if when:
-            return when
+        try:
+            timestamp = self.get_data(con, login, "whenCreated")
+            timestamp = timestamp[0].decode("utf-8")
+            when = self.convert_ldaptimestamp(timestamp)
+            if when:
+                return when
+        except Exception:
+            return False
         return False
 
     def get_changed(self, con, login):
-        timestamp = self.get_data(con, login, "whenChanged")
-        timestamp = timestamp[0].decode("utf-8")
-        when = self.convert_ldaptimestamp(timestamp)
-        if when:
-            return when
+        try:
+            timestamp = self.get_data(con, login, "whenChanged")
+            timestamp = timestamp[0].decode("utf-8")
+            when = self.convert_ldaptimestamp(timestamp)
+            if when:
+                return when
+        except Exception:
+            return False
         return False
 
     def get_groups(self, con, login):
-        data = []
-        groups = self.get_data(con, login, "memberOf")
-        groups = list(dict.fromkeys(groups))
-        for group in groups:
-            group = group.decode("utf-8")
-            group = group.split(",")
-            group = group[0].split("=")
-            data.append(group[1])
-        return data
+        try:
+            data = []
+            groups = self.get_data(con, login, "memberOf")
+            groups = list(dict.fromkeys(groups))
+            for group in groups:
+                group = group.decode("utf-8")
+                group = group.split(",")
+                group = group[0].split("=")
+                data.append(group[1])
+            return data
+        except Exception:
+            return False
+        return False
+
+    def get_failcount(self, con, login):
+        try:
+            count = self.get_data(con, login, "badPwdCount")
+            count = count[0].decode("utf-8")
+            return count
+        except Exception:
+            return False
+        return False
+
+    def get_lastfail(self, con, login):
+        try:
+            timestamp = self.get_data(con, login, "badPasswordTime")
+            timestamp = timestamp[0].decode("utf-8")
+            timestamp = (int(timestamp) / 10000000) - 11644473600
+            lastfail = datetime.datetime.fromtimestamp(timestamp)
+            lastfail = lastfail.strftime('%H:%M:%S %d-%m-%Y')
+            if lastfail:
+                return lastfail
+        except Exception:
+            return False
+        return False
+
+    def get_lastlogin(self, con, login):
+        try:
+            timestamp = self.get_data(con, login, "lastLogon")
+            timestamp = timestamp[0].decode("utf-8")
+            timestamp = (int(timestamp) / 10000000) - 11644473600
+            lastlogin = datetime.datetime.fromtimestamp(timestamp)
+            lastlogin = lastlogin.strftime('%H:%M:%S %d-%m-%Y')
+            if lastlogin:
+                return lastlogin
+        except Exception:
+            return False
+        return False
+
+    def get_lastpwdset(self, con, login):
+        try:
+            timestamp = self.get_data(con, login, "pwdLastSet")
+            timestamp = timestamp[0].decode("utf-8")
+            timestamp = (int(timestamp) / 10000000) - 11644473600
+            lastpwd = datetime.datetime.fromtimestamp(timestamp)
+            lastpwd = lastpwd.strftime('%H:%M:%S %d-%m-%Y')
+            if lastpwd:
+                return lastpwd
+        except Exception:
+            return False
+        return False
+
+    def is_admin(self, con, login):
+        try:
+            isadmin = self.get_data(con, login, "adminCount")
+            isadmin = isadmin[0].decode("utf-8")
+            if int(isadmin) == 1:
+                return True
+        except Exception:
+            return False
+        return False
 
     def get_certs(self, con, login):
         certs = self.get_data(con, login, "userCertificate")

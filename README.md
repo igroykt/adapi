@@ -44,9 +44,10 @@ for dump in dumpcerts:
 * connect() none -> подключение к базе данных
 * disconnect(handler) none -> отключение базы данных
 * is_user(handler, login) bool -> проверка пользователя на существование/блокировку
-* is_authenticated(login, password) bool -> проверка на аутентификацию
+* is_authenticated(handler, login, password) bool -> проверка на аутентификацию
 * is_admin(handler, login) bool -> состоит ли пользователь в административных группах
 * get_name(handler, login) string -> имя пользователя
+* get_principalname(handler, login) string -> userPrincipalName
 * get_fullname(handler, login) string -> полное имя
 * get_mail(handler, login) string -> адрес почты
 * get_description(handler, login) string -> описание

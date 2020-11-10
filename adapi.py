@@ -90,11 +90,11 @@ class ADApi:
                         return True
         return False
 
-    def is_authenticated(self, login, password):
+    def is_authenticated(self, con, login, password):
         try:
             login = self.login2un(login)
             try:
-                test = self.con.simple_bind_s(login, password)
+                test = con.simple_bind_s(login, password)
             except ldap.LDAPError as e:
                 e = self.err2dict(e)
                 if type(e) is dict and 'desc' in e:
@@ -126,9 +126,19 @@ class ADApi:
             username = username[0].decode("utf-8")
             if username:
                 return username
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
+
+    def get_principalname(self, con, login):
+        try:
+            userdn = self.get_data(con, login, "userPrincipalName")
+            userdn = userdn[0].decode("utf-8")
+            if userdn:
+                return userdn
+            return False
+        except Exception as e:
+            return e
 
     def get_fullname(self, con, login):
         try:
@@ -139,9 +149,9 @@ class ADApi:
             userdn = userdn[1]
             if userdn:
                 return userdn
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_mail(self, con, login):
         try:
@@ -149,9 +159,9 @@ class ADApi:
             mail = mail[0].decode("utf-8")
             if mail:
                 return mail
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_description(self, con, login):
         try:
@@ -159,9 +169,9 @@ class ADApi:
             desc = desc[0].decode("utf-8")
             if desc:
                 return desc
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_created(self, con, login):
         try:
@@ -170,9 +180,9 @@ class ADApi:
             when = self.convert_ldaptimestamp(timestamp)
             if when:
                 return when
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_changed(self, con, login):
         try:
@@ -181,9 +191,9 @@ class ADApi:
             when = self.convert_ldaptimestamp(timestamp)
             if when:
                 return when
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_groups(self, con, login):
         try:
@@ -195,19 +205,21 @@ class ADApi:
                 group = group.split(",")
                 group = group[0].split("=")
                 data.append(group[1])
-            return data
-        except Exception:
+            if data:
+                return data
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_failcount(self, con, login):
         try:
             count = self.get_data(con, login, "badPwdCount")
             count = count[0].decode("utf-8")
-            return int(count)
-        except Exception:
+            if count:
+                return int(count)
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_lastfail(self, con, login):
         try:
@@ -218,9 +230,9 @@ class ADApi:
             lastfail = lastfail.strftime('%H:%M:%S %d-%m-%Y')
             if lastfail:
                 return lastfail
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_lastlogin(self, con, login):
         try:
@@ -231,9 +243,9 @@ class ADApi:
             lastlogin = lastlogin.strftime('%H:%M:%S %d-%m-%Y')
             if lastlogin:
                 return lastlogin
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_lastpwdset(self, con, login):
         try:
@@ -244,9 +256,9 @@ class ADApi:
             lastpwd = lastpwd.strftime('%H:%M:%S %d-%m-%Y')
             if lastpwd:
                 return lastpwd
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def is_admin(self, con, login):
         try:
@@ -254,9 +266,9 @@ class ADApi:
             isadmin = isadmin[0].decode("utf-8")
             if int(isadmin) == 1:
                 return True
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_expires(self, con, login):
         try:
@@ -267,18 +279,19 @@ class ADApi:
             expires = expires.strftime('%H:%M:%S %d-%m-%Y')
             if expires:
                 return expires
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_logincount(self, con, login):
         try:
             count = self.get_data(con, login, "logonCount")
             count = count[0].decode("utf-8")
-            return int(count)
-        except Exception:
+            if count:
+                return int(count)
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_login(self, con, login):
         try:
@@ -286,9 +299,9 @@ class ADApi:
             login = login[0].decode("utf-8")
             if login:
                 return login
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_phonenumber(self, con, login):
         try:
@@ -296,9 +309,9 @@ class ADApi:
             mobile = mobile[0].decode("utf-8")
             if mobile:
                 return mobile
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e
 
     def get_certificate(self, con, login, action):
         try:
@@ -316,6 +329,6 @@ class ADApi:
                         data.append(der.decode("utf-8"))
             if data:
                 return data
-        except Exception:
             return False
-        return False
+        except Exception as e:
+            return e

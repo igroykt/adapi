@@ -98,7 +98,8 @@ class ADApi:
             except ldap.LDAPError as e:
                 e = self.err2dict(e)
                 if type(e) is dict and 'desc' in e:
-                    raise SystemExit(f"Error: {e['desc']}")
+                    #raise SystemExit(f"Error: {e['desc']}")
+                    return False
             if test:
                 return True
         except ldap.INVALID_CREDENTIALS:

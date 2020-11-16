@@ -124,9 +124,10 @@ class ADApi:
     def get_name(self, con, login):
         try:
             username = self.get_data(con, login, "givenName")
-            username = username[0].decode("utf-8")
             if username:
-                return username
+                username = username[0].decode("utf-8")
+                if username:
+                    return username
             return False
         except Exception as e:
             return e
@@ -134,9 +135,10 @@ class ADApi:
     def get_principalname(self, con, login):
         try:
             userdn = self.get_data(con, login, "userPrincipalName")
-            userdn = userdn[0].decode("utf-8")
             if userdn:
-                return userdn
+                userdn = userdn[0].decode("utf-8")
+                if userdn:
+                    return userdn
             return False
         except Exception as e:
             return e
@@ -144,12 +146,13 @@ class ADApi:
     def get_fullname(self, con, login):
         try:
             userdn = self.get_data(con, login, "distinguishedName")
-            userdn = userdn[0].decode("utf-8")
-            userdn = userdn.split(",")
-            userdn = userdn[0].split("=")
-            userdn = userdn[1]
             if userdn:
-                return userdn
+                userdn = userdn[0].decode("utf-8")
+                userdn = userdn.split(",")
+                userdn = userdn[0].split("=")
+                userdn = userdn[1]
+                if userdn:
+                    return userdn
             return False
         except Exception as e:
             return e
@@ -157,9 +160,10 @@ class ADApi:
     def get_mail(self, con, login):
         try:
             mail = self.get_data(con, login, "mail")
-            mail = mail[0].decode("utf-8")
             if mail:
-                return mail
+                mail = mail[0].decode("utf-8")
+                if mail:
+                    return mail
             return False
         except Exception as e:
             return e
@@ -167,9 +171,10 @@ class ADApi:
     def get_description(self, con, login):
         try:
             desc = self.get_data(con, login, "description")
-            desc = desc[0].decode("utf-8")
             if desc:
-                return desc
+                desc = desc[0].decode("utf-8")
+                if desc:
+                    return desc
             return False
         except Exception as e:
             return e
@@ -177,10 +182,11 @@ class ADApi:
     def get_created(self, con, login):
         try:
             timestamp = self.get_data(con, login, "whenCreated")
-            timestamp = timestamp[0].decode("utf-8")
-            when = self.convert_ldaptimestamp(timestamp)
-            if when:
-                return when
+            if timestamp:
+                timestamp = timestamp[0].decode("utf-8")
+                when = self.convert_ldaptimestamp(timestamp)
+                if when:
+                    return when
             return False
         except Exception as e:
             return e
@@ -188,10 +194,11 @@ class ADApi:
     def get_changed(self, con, login):
         try:
             timestamp = self.get_data(con, login, "whenChanged")
-            timestamp = timestamp[0].decode("utf-8")
-            when = self.convert_ldaptimestamp(timestamp)
-            if when:
-                return when
+            if timestamp:
+                timestamp = timestamp[0].decode("utf-8")
+                when = self.convert_ldaptimestamp(timestamp)
+                if when:
+                    return when
             return False
         except Exception as e:
             return e
@@ -200,14 +207,15 @@ class ADApi:
         try:
             data = []
             groups = self.get_data(con, login, "memberOf")
-            groups = list(dict.fromkeys(groups))
-            for group in groups:
-                group = group.decode("utf-8")
-                group = group.split(",")
-                group = group[0].split("=")
-                data.append(group[1])
-            if data:
-                return data
+            if groups:
+                groups = list(dict.fromkeys(groups))
+                for group in groups:
+                    group = group.decode("utf-8")
+                    group = group.split(",")
+                    group = group[0].split("=")
+                    data.append(group[1])
+                if data:
+                    return data
             return False
         except Exception as e:
             return e
@@ -215,9 +223,10 @@ class ADApi:
     def get_failcount(self, con, login):
         try:
             count = self.get_data(con, login, "badPwdCount")
-            count = count[0].decode("utf-8")
             if count:
-                return int(count)
+                count = count[0].decode("utf-8")
+                if count:
+                    return int(count)
             return False
         except Exception as e:
             return e
@@ -225,12 +234,13 @@ class ADApi:
     def get_lastfail(self, con, login):
         try:
             timestamp = self.get_data(con, login, "badPasswordTime")
-            timestamp = timestamp[0].decode("utf-8")
-            timestamp = (int(timestamp) / 10000000) - 11644473600
-            lastfail = datetime.datetime.fromtimestamp(timestamp)
-            lastfail = lastfail.strftime('%H:%M:%S %d-%m-%Y')
-            if lastfail:
-                return lastfail
+            if timestamp:
+                timestamp = timestamp[0].decode("utf-8")
+                timestamp = (int(timestamp) / 10000000) - 11644473600
+                lastfail = datetime.datetime.fromtimestamp(timestamp)
+                lastfail = lastfail.strftime('%H:%M:%S %d-%m-%Y')
+                if lastfail:
+                    return lastfail
             return False
         except Exception as e:
             return e
@@ -238,12 +248,13 @@ class ADApi:
     def get_lastlogin(self, con, login):
         try:
             timestamp = self.get_data(con, login, "lastLogon")
-            timestamp = timestamp[0].decode("utf-8")
-            timestamp = (int(timestamp) / 10000000) - 11644473600
-            lastlogin = datetime.datetime.fromtimestamp(timestamp)
-            lastlogin = lastlogin.strftime('%H:%M:%S %d-%m-%Y')
-            if lastlogin:
-                return lastlogin
+            if timestamp:
+                timestamp = timestamp[0].decode("utf-8")
+                timestamp = (int(timestamp) / 10000000) - 11644473600
+                lastlogin = datetime.datetime.fromtimestamp(timestamp)
+                lastlogin = lastlogin.strftime('%H:%M:%S %d-%m-%Y')
+                if lastlogin:
+                    return lastlogin
             return False
         except Exception as e:
             return e
@@ -251,12 +262,13 @@ class ADApi:
     def get_lastpwdset(self, con, login):
         try:
             timestamp = self.get_data(con, login, "pwdLastSet")
-            timestamp = timestamp[0].decode("utf-8")
-            timestamp = (int(timestamp) / 10000000) - 11644473600
-            lastpwd = datetime.datetime.fromtimestamp(timestamp)
-            lastpwd = lastpwd.strftime('%H:%M:%S %d-%m-%Y')
-            if lastpwd:
-                return lastpwd
+            if timestamp:
+                timestamp = timestamp[0].decode("utf-8")
+                timestamp = (int(timestamp) / 10000000) - 11644473600
+                lastpwd = datetime.datetime.fromtimestamp(timestamp)
+                lastpwd = lastpwd.strftime('%H:%M:%S %d-%m-%Y')
+                if lastpwd:
+                    return lastpwd
             return False
         except Exception as e:
             return e
@@ -264,9 +276,10 @@ class ADApi:
     def is_admin(self, con, login):
         try:
             isadmin = self.get_data(con, login, "adminCount")
-            isadmin = isadmin[0].decode("utf-8")
-            if int(isadmin) == 1:
-                return True
+            if isadmin:
+                isadmin = isadmin[0].decode("utf-8")
+                if int(isadmin) == 1:
+                    return True
             return False
         except Exception as e:
             return e
@@ -274,12 +287,13 @@ class ADApi:
     def get_expires(self, con, login):
         try:
             timestamp = self.get_data(con, login, "accountExpires")
-            timestamp = timestamp[0].decode("utf-8")
-            timestamp = (int(timestamp) / 10000000) - 11644473600
-            expires = datetime.datetime.fromtimestamp(timestamp)
-            expires = expires.strftime('%H:%M:%S %d-%m-%Y')
-            if expires:
-                return expires
+            if timestamp:
+                timestamp = timestamp[0].decode("utf-8")
+                timestamp = (int(timestamp) / 10000000) - 11644473600
+                expires = datetime.datetime.fromtimestamp(timestamp)
+                expires = expires.strftime('%H:%M:%S %d-%m-%Y')
+                if expires:
+                    return expires
             return False
         except Exception as e:
             return e
@@ -287,9 +301,10 @@ class ADApi:
     def get_logincount(self, con, login):
         try:
             count = self.get_data(con, login, "logonCount")
-            count = count[0].decode("utf-8")
             if count:
-                return int(count)
+                count = count[0].decode("utf-8")
+                if count:
+                    return int(count)
             return False
         except Exception as e:
             return e
@@ -297,9 +312,10 @@ class ADApi:
     def get_login(self, con, login):
         try:
             login = self.get_data(con, login, "sAMAccountName")
-            login = login[0].decode("utf-8")
             if login:
-                return login
+                login = login[0].decode("utf-8")
+                if login:
+                    return login
             return False
         except Exception as e:
             return e
@@ -307,9 +323,10 @@ class ADApi:
     def get_phonenumber(self, con, login):
         try:
             mobile = self.get_data(con, login, "mobile")
-            mobile = mobile[0].decode("utf-8")
             if mobile:
-                return mobile
+                mobile = mobile[0].decode("utf-8")
+                if mobile:
+                    return mobile
             return False
         except Exception as e:
             return e
@@ -317,19 +334,20 @@ class ADApi:
     def get_certificate(self, con, login, action):
         try:
             certs = self.get_data(con, login, "userCertificate")
-            data = []
-            for cert in certs:
-                x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, cert)
-                if not x509.has_expired():
-                    if "subject" in action:
-                        data.append(x509.get_subject())
-                    if "serial" in action:
-                        data.append(x509.get_serial_number())
-                    if "dump" in action:
-                        der = crypto.dump_certificate(crypto.FILETYPE_PEM, x509)
-                        data.append(der.decode("utf-8"))
-            if data:
-                return data
+            if certs:
+                data = []
+                for cert in certs:
+                    x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, cert)
+                    if not x509.has_expired():
+                        if "subject" in action:
+                            data.append(x509.get_subject())
+                        if "serial" in action:
+                            data.append(x509.get_serial_number())
+                        if "dump" in action:
+                            der = crypto.dump_certificate(crypto.FILETYPE_PEM, x509)
+                            data.append(der.decode("utf-8"))
+                if data:
+                    return data
             return False
         except Exception as e:
             return e

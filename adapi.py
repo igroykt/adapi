@@ -94,11 +94,11 @@ class ADApi:
         try:
             login = self.login2un(login)
             try:
-                test = con.simple_bind_s(login, password)
+                if len(password) > 0: #looks like simple_bind_s pass empty passwords
+                    test = con.simple_bind_s(login, password)
             except ldap.LDAPError as e:
                 e = self.err2dict(e)
                 if type(e) is dict and 'desc' in e:
-                    #raise SystemExit(f"Error: {e['desc']}")
                     return False
             if test:
                 return True

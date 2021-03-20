@@ -93,6 +93,7 @@ class ADApi:
     def is_authenticated(self, con, login, password):
         try:
             login = self.login2un(login)
+            test = None
             try:
                 if len(password) > 0: #looks like simple_bind_s pass empty passwords
                     test = con.simple_bind_s(login, password)
@@ -100,7 +101,7 @@ class ADApi:
                 e = self.err2dict(e)
                 if type(e) is dict and 'desc' in e:
                     return False
-            if test:
+            if test is not None:
                 return True
         except ldap.INVALID_CREDENTIALS:
             return False

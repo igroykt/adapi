@@ -60,11 +60,11 @@ class ADApi:
             con.simple_bind_s(self.ldap_user, self.ldap_pass)
             return con
         except ldap.INVALID_CREDENTIALS as e:
-            raise SystemExit(f"Error: Invalid credentials")
+            raise Exception(f"connect: Invalid credentials")
         except ldap.LDAPError as e:
             e = self.err2dict(e)
             if type(e) is dict and 'desc' in e:
-                raise SystemExit(f"Error: {e['desc']}")
+                raise Exception(f"connect: {e['desc']}")
         return False
 
     def disconnect(self, con):
@@ -81,7 +81,7 @@ class ADApi:
         except ldap.LDAPError as e:
             e = self.err2dict(e)
             if type(e) is dict and 'desc' in e:
-                raise SystemExit(f"Error: {e['desc']}")
+                raise Exception(f"is_user: {e['desc']}")
         if result:
             for data in result:
                 if type(data[1]) is dict:
@@ -114,7 +114,7 @@ class ADApi:
         except ldap.LDAPError as e:
             e = self.err2dict(e)
             if type(e) is dict and 'desc' in e:
-                raise SystemExit(f"Error: {e['desc']}")
+                raise Exception(f"get_data: {e['desc']}")
         if result:
             for data in result:
                 if type(data[1]) is dict:
@@ -131,7 +131,7 @@ class ADApi:
                     return username
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_name: {e}')
 
     def get_principalname(self, con, login):
         try:
@@ -142,7 +142,7 @@ class ADApi:
                     return userdn
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_principalname: {e}')
 
     def get_fullname(self, con, login):
         try:
@@ -156,7 +156,7 @@ class ADApi:
                     return userdn
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_fullname: {e}')
 
     def get_mail(self, con, login):
         try:
@@ -167,7 +167,7 @@ class ADApi:
                     return mail
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_mail: {e}')
 
     def get_description(self, con, login):
         try:
@@ -178,7 +178,7 @@ class ADApi:
                     return desc
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_description: {e}')
 
     def get_created(self, con, login):
         try:
@@ -190,7 +190,7 @@ class ADApi:
                     return when
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_created: {e}')
 
     def get_changed(self, con, login):
         try:
@@ -202,7 +202,7 @@ class ADApi:
                     return when
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_changed: {e}')
 
     def get_groups(self, con, login):
         try:
@@ -219,7 +219,7 @@ class ADApi:
                     return data
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_groups: {e}')
 
     def get_failcount(self, con, login):
         try:
@@ -230,7 +230,7 @@ class ADApi:
                     return int(count)
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_failcount: {e}')
 
     def get_lastfail(self, con, login):
         try:
@@ -244,7 +244,7 @@ class ADApi:
                     return lastfail
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_lastfail: {e}')
 
     def get_lastlogin(self, con, login):
         try:
@@ -258,7 +258,7 @@ class ADApi:
                     return lastlogin
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_lastlogin: {e}')
 
     def get_lastpwdset(self, con, login):
         try:
@@ -272,7 +272,7 @@ class ADApi:
                     return lastpwd
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_lastpwdset: {e}')
 
     def is_admin(self, con, login):
         try:
@@ -283,7 +283,7 @@ class ADApi:
                     return True
             return False
         except Exception as e:
-            return e
+            raise Exception(f'is_admin: {e}')
 
     def get_expires(self, con, login):
         try:
@@ -297,7 +297,7 @@ class ADApi:
                     return expires
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_expires: {e}')
 
     def get_logincount(self, con, login):
         try:
@@ -308,7 +308,7 @@ class ADApi:
                     return int(count)
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_logincount: {e}')
 
     def get_login(self, con, login):
         try:
@@ -319,7 +319,7 @@ class ADApi:
                     return login
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_login: {e}')
 
     def get_phonenumber(self, con, login):
         try:
@@ -330,7 +330,7 @@ class ADApi:
                     return mobile
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_phonenumber: {e}')
 
     def get_certificate(self, con, login, action):
         try:
@@ -351,4 +351,4 @@ class ADApi:
                     return data
             return False
         except Exception as e:
-            return e
+            raise Exception(f'get_certificate: {e}')

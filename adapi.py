@@ -79,7 +79,7 @@ class ADApi:
             for record in users_list:
                 for i,v in record[1].items():
                     if not v[0].decode().endswith('$'):
-                        tmp.append(v[0].decode())
+                        tmp.append(v[0].decode().lower())
         except:
             pass
         return tmp

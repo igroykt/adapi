@@ -56,7 +56,7 @@ class ADApi:
             self.ldap_user = self.login2un(self.ldap_user)
             con = ldap.initialize(self.ldap_server)
             con.set_option(ldap.OPT_REFERRALS, 0)
-            con.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+            #con.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
             con.simple_bind_s(self.ldap_user, self.ldap_pass)
             return con
         except ldap.INVALID_CREDENTIALS as e:
@@ -73,11 +73,54 @@ class ADApi:
         except Exception:
             pass
 
-    def is_user(self, login):
+    def unpack_users_list(self, users_list):
+        tmp = []
+        try:
+            for record in users_list:
+                for i,v in record[1].items():
+                    if not v[0].decode().endswith('$'):
+                        tmp.append(v[0].decode())
+        except:
+            pass
+        return tmp
+
+    def list_users(self, con, by="username"):
+        filter = "(objectClass=user)"
+        if by == "username":
+            attrs = ['sAMAccountName']
+        if by == "email":
+            attrs = ['mail']
+        try:
+            page_control = ldap.controls.SimplePagedResultsControl(True, size=1000, cookie='')
+            response = con.search_ext(self.base_dn, ldap.SCOPE_SUBTREE, filter, attrs, serverctrls=[page_control])
+            result_set = []
+            pages = 0
+            while True:
+                pages += 1
+                rtype, rdata, rmsgid, serverctrls = con.result3(response)
+                unpacked_data = self.unpack_users_list(rdata)
+                result_set.extend(unpacked_data)
+                controls = [control for control in serverctrls if control.controlType == ldap.controls.SimplePagedResultsControl.controlType]
+                if not controls:
+                    #print('The server ignores RFC 2696 control')
+                    break
+                if not controls[0].cookie:
+                    break
+                page_control.cookie = controls[0].cookie
+                response = con.search_ext(self.base_dn, ldap.SCOPE_SUBTREE, filter, attrs, serverctrls=[page_control])
+            if result_set:
+                result_set.sort()
+                return result_set
+        except ldap.LDAPError as e:
+            e = self.err2dict(e)
+            if type(e) is dict and 'desc' in e:
+                raise Exception(f"list_users: {e['desc']}")
+
+    def is_user(self, con, login):
         filter = "(&(objectClass=user)(sAMAccountName="+login+"))"
         attrs = ["*"]
         try:
-            result = self.con.search_s(self.base_dn, ldap.SCOPE_SUBTREE, filter, attrs)
+            result = con.search_s(self.base_dn, ldap.SCOPE_SUBTREE, filter, attrs)
         except ldap.LDAPError as e:
             e = self.err2dict(e)
             if type(e) is dict and 'desc' in e:
@@ -85,7 +128,8 @@ class ADApi:
         if result:
             for data in result:
                 if type(data[1]) is dict:
-                    obj = self.dekodirui_suka(data[1]['userAccountControl'])
+                    obj = data[1]['userAccountControl']
+                    obj = obj[0].decode()
                     if obj == "66048":
                         return True
         return False

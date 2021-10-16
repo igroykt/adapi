@@ -43,6 +43,7 @@ for dump in dumpcerts:
 ## Методы
 * connect() none -> подключение к базе данных
 * disconnect(handler) none -> отключение базы данных
+* list_users(handler, by) list -> возвращает сортированный список пользователей (значения by: username, email)
 * is_user(handler, login) bool -> проверка пользователя на существование/блокировку
 * is_authenticated(handler, login, password) bool -> проверка на аутентификацию
 * is_admin(handler, login) bool -> состоит ли пользователь в административных группах

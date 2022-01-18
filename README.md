@@ -64,3 +64,4 @@ for dump in dumpcerts:
 * get_login(handler, login) string -> логин пользователя
 * get_phonenumber(handler, login) string -> номер телефона пользователя
 * get_certificate(handler, login, action {subject, serial, dump}) list -> запрос субъекта, серийного номера, дампа сертификатов пользователя в формате PEM
+* is_radius_blocked(handler, login) bool -> проверка доступа пользователя к radius серверу (True значит запрещен Dial-in)

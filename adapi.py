@@ -166,6 +166,22 @@ class ADApi:
                     return obj
         return False
 
+    def get_denied_dialer(self, con, login, attribute):
+        filter = "(&(objectClass=user)(sAMAccountName="+login+")(msNPAllowDialin=FALSE))"
+        attrs = [attribute]
+        try:
+            result = con.search_s(self.base_dn, ldap.SCOPE_SUBTREE, filter, attrs)
+        except ldap.LDAPError as e:
+            e = self.err2dict(e)
+            if type(e) is dict and 'desc' in e:
+                raise Exception(f"get_data: {e['desc']}")
+        if result:
+            for data in result:
+                if type(data[1]) is dict:
+                    obj = data[1][attribute]
+                    return obj
+        return False
+
     def get_name(self, con, login):
         try:
             username = self.get_data(con, login, "givenName")
@@ -396,3 +412,14 @@ class ADApi:
             return False
         except Exception as e:
             raise Exception(f'get_certificate: {e}')
+
+    def is_radius_blocked(self, con, login):
+        try:
+            radius = self.get_denied_dialer(con, login, "sAMAccountName")
+            if radius:
+                #radius = radius[0].decode("utf-8")
+                if radius:
+                    return True
+            return False
+        except Exception as e:
+            raise Exception(f'is_radius: {e}')

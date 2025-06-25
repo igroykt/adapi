@@ -1,77 +1,84 @@
 import os
 import re
-import sys
 import ldap
-import ldap.sasl
-import ast
-import datetime
+import ldap.filter
+from decouple import config
+from contextlib import contextmanager
+from datetime import datetime
 from OpenSSL import crypto
 
 class ADApi:
-    ldap_server = ""
-    ldap_user = ""
-    ldap_pass = ""
-    base_dn = ""
-    search_dn = ""
 
-    def __init__(self, ldap_server, ldap_user, ldap_pass, base_dn, search_dn):
-        self.ldap_server = ldap_server
-        self.ldap_user = ldap_user
-        self.ldap_pass = ldap_pass
-        self.base_dn = base_dn
-        self.search_dn = search_dn
+    def __init__(self):
+        self.ldap_server = config('LDAP_SERVER')
+        self.ldap_user = config('LDAP_USER')
+        self.ldap_pass = config('LDAP_PASS')
+        self.base_dn = config('BASE_DN')
+        self.search_dn = config('SEARCH_DN')
+        if self.ldap_server.lower().startswith('ldaps://'):
+            self.ca_cert = config('CA_CERT')
+            os.environ['SSL_CERT_FILE'] = os.path.abspath(self.ca_cert)
 
     def err2dict(self, err):
-        err = re.sub(r'^.*?{', '{', str(err))
-        err = ast.literal_eval(err)
-        return err
+        err_str = str(err)
+        match = re.search(r"desc: ([^}]+)", err_str)
+        return {'desc': match.group(1)} if match else {'desc': str(err)}
 
     def dn2domain(self, dn):
-        domain = str(dn)
-        domain = domain.replace("dc=", "")
-        domain = domain.replace(",", ".")
+        domain = str(dn).replace("dc=", "").replace(",", ".")
         return domain
 
     def login2un(self, login):
         domain = self.dn2domain(self.base_dn)
-        un = f"{login}@{domain}"
-        return str(un)
+        return f"{login}@{domain}"
 
     def convert_ldaptimestamp(self, timestamp):
-        timestamp = timestamp.split(".")
-        timestamp = str(timestamp[0])
-        year = timestamp[0]+timestamp[1]+timestamp[2]+timestamp[3]
-        month = timestamp[4]+timestamp[5]
-        day = timestamp[6]+timestamp[7]
-        hour = timestamp[8]+timestamp[9]
-        minutes = timestamp[10]+timestamp[11]
-        seconds = timestamp[12]+timestamp[13]
-        readable = f"{hour}:{minutes}:{seconds} {day}-{month}-{year}"
-        if readable:
-            return readable
-        return False
+        try:
+            if not timestamp or not re.match(r'^\d{14}', timestamp):
+                return False
+            dt = datetime.strptime(timestamp[:14], '%Y%m%d%H%M%S')
+            return dt.strftime('%H:%M:%S %d-%m-%Y')
+        except ValueError:
+            return False
 
     def connect(self):
         try:
             self.ldap_user = self.login2un(self.ldap_user)
             con = ldap.initialize(self.ldap_server)
             con.set_option(ldap.OPT_REFERRALS, 0)
-            #con.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+            con.set_option(ldap.OPT_NETWORK_TIMEOUT, 10)
+            # Check if protocol is ldaps
+            if self.ldap_server.lower().startswith('ldaps://'):
+                # LDAPS connection (secure by default, no additional START_TLS needed)
+                con.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
+            elif not self.ldap_server.lower().startswith('ldap://') and self.ldap_server.lower().endswith('636'):
+                # Non-LDAPS (ldap://), attempt START_TLS for security
+                try:
+                    con.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
+                    con.start_tls_s()
+                except ldap.LDAPError as e:
+                    raise Exception(f"START_TLS failed, proceeding with insecure LDAP connection: {e}")
             con.simple_bind_s(self.ldap_user, self.ldap_pass)
             return con
-        except ldap.INVALID_CREDENTIALS as e:
-            raise Exception(f"connect: Invalid credentials")
+        except ldap.INVALID_CREDENTIALS:
+            raise Exception("connect: Invalid credentials")
         except ldap.LDAPError as e:
             e = self.err2dict(e)
-            if type(e) is dict and 'desc' in e:
-                raise Exception(f"connect: {e['desc']}")
-        return False
+            raise Exception(f"connect: {e['desc']}")
 
     def disconnect(self, con):
         try:
             con.unbind_s()
-        except Exception:
-            pass
+        except ldap.LDAPError as e:
+            raise Exception(f"Failed to disconnect LDAP: {e}")
+
+    @contextmanager
+    def ldap_connection(self):
+        con = self.connect()
+        try:
+            yield con
+        finally:
+            self.disconnect(con)
 
     def unpack_users_list(self, users_list):
         tmp = []
@@ -86,69 +93,53 @@ class ADApi:
 
     def list_users(self, con, by="username"):
         filter = "(objectClass=user)"
-        if by == "username":
-            attrs = ['sAMAccountName']
-        if by == "email":
-            attrs = ['mail']
+        attrs = ['sAMAccountName'] if by == "username" else ['mail']
         try:
             page_control = ldap.controls.SimplePagedResultsControl(True, size=1000, cookie='')
-            response = con.search_ext(self.base_dn, ldap.SCOPE_SUBTREE, filter, attrs, serverctrls=[page_control])
             result_set = []
-            pages = 0
             while True:
-                pages += 1
+                response = con.search_ext(self.base_dn, ldap.SCOPE_SUBTREE, filter, attrs, serverctrls=[page_control])
                 rtype, rdata, rmsgid, serverctrls = con.result3(response)
                 unpacked_data = self.unpack_users_list(rdata)
                 result_set.extend(unpacked_data)
                 controls = [control for control in serverctrls if control.controlType == ldap.controls.SimplePagedResultsControl.controlType]
-                if not controls:
-                    #print('The server ignores RFC 2696 control')
-                    break
-                if not controls[0].cookie:
+                if not controls or not controls[0].cookie:
                     break
                 page_control.cookie = controls[0].cookie
-                response = con.search_ext(self.base_dn, ldap.SCOPE_SUBTREE, filter, attrs, serverctrls=[page_control])
-            if result_set:
-                result_set.sort()
-                return result_set
+            result_set.sort()
+            return result_set if result_set else False
         except ldap.LDAPError as e:
             e = self.err2dict(e)
-            if type(e) is dict and 'desc' in e:
+            if isinstance(e, dict) and 'desc' in e:
                 raise Exception(f"list_users: {e['desc']}")
 
     def is_user(self, con, login):
-        filter = "(&(objectClass=user)(sAMAccountName="+login+"))"
+        login = ldap.filter.escape_filter_chars(login)
+        filter = f"(&(objectClass=user)(sAMAccountName={login}))"
         attrs = ["*"]
         try:
             result = con.search_s(self.base_dn, ldap.SCOPE_SUBTREE, filter, attrs)
+            for data in result:
+                if isinstance(data[1], dict):
+                    obj = int(data[1]['userAccountControl'][0].decode("utf-8", errors="replace"))
+                    if obj & 512 or obj == 66048:  # Enabled or normal account
+                        return True
+            return False
         except ldap.LDAPError as e:
             e = self.err2dict(e)
-            if type(e) is dict and 'desc' in e:
-                raise Exception(f"is_user: {e['desc']}")
-        if result:
-            for data in result:
-                if type(data[1]) is dict:
-                    obj = data[1]['userAccountControl']
-                    obj = obj[0].decode()
-                    if obj == "66048":
-                        return True
-        return False
+            raise Exception(f"is_user: {e['desc']}")
 
     def is_authenticated(self, con, login, password):
         try:
+            if not password or len(password) < 8:
+                raise Exception(f"Invalid password length for user: {login}")
             login = self.login2un(login)
-            test = None
-            try:
-                if len(password) > 0: #looks like simple_bind_s pass empty passwords
-                    test = con.simple_bind_s(login, password)
-            except ldap.LDAPError as e:
-                e = self.err2dict(e)
-                if type(e) is dict and 'desc' in e:
-                    return False
-            if test is not None:
-                return True
+            con.simple_bind_s(login, password)
+            return True
         except ldap.INVALID_CREDENTIALS:
-            return False
+            raise Exception(f"Authentication failed for user: {login}")
+        except ldap.LDAPError as e:
+            raise Exception(f"LDAP error during authentication for {login}: {e}")
 
     def get_data(self, con, login, attribute):
         filter = "(&(objectClass=user)(sAMAccountName="+login+"))"
@@ -186,18 +177,20 @@ class ADApi:
         try:
             username = self.get_data(con, login, "givenName")
             if username:
-                username = username[0].decode("utf-8")
+                username = username[0].decode("utf-8", errors="replace")
                 if username:
                     return username
             return False
-        except Exception as e:
-            raise Exception(f'get_name: {e}')
+        except ldap.LDAPError as e:
+            raise Exception(f"get_name: {e}")
+        except UnicodeDecodeError as e:
+            raise Exception(f"get_name: Invalid encoding")
 
     def get_principalname(self, con, login):
         try:
             userdn = self.get_data(con, login, "userPrincipalName")
             if userdn:
-                userdn = userdn[0].decode("utf-8")
+                userdn = userdn[0].decode("utf-8", errors="replace")
                 if userdn:
                     return userdn
             return False
@@ -208,7 +201,7 @@ class ADApi:
         try:
             userdn = self.get_data(con, login, "distinguishedName")
             if userdn:
-                userdn = userdn[0].decode("utf-8")
+                userdn = userdn[0].decode("utf-8", errors="replace")
                 userdn = userdn.split(",")
                 userdn = userdn[0].split("=")
                 userdn = userdn[1]
@@ -222,7 +215,7 @@ class ADApi:
         try:
             mail = self.get_data(con, login, "mail")
             if mail:
-                mail = mail[0].decode("utf-8")
+                mail = mail[0].decode("utf-8", errors="replace")
                 if mail:
                     return mail
             return False
@@ -233,7 +226,7 @@ class ADApi:
         try:
             desc = self.get_data(con, login, "description")
             if desc:
-                desc = desc[0].decode("utf-8")
+                desc = desc[0].decode("utf-8", errors="replace")
                 if desc:
                     return desc
             return False
@@ -244,7 +237,7 @@ class ADApi:
         try:
             timestamp = self.get_data(con, login, "whenCreated")
             if timestamp:
-                timestamp = timestamp[0].decode("utf-8")
+                timestamp = timestamp[0].decode("utf-8", errors="replace")
                 when = self.convert_ldaptimestamp(timestamp)
                 if when:
                     return when
@@ -256,7 +249,7 @@ class ADApi:
         try:
             timestamp = self.get_data(con, login, "whenChanged")
             if timestamp:
-                timestamp = timestamp[0].decode("utf-8")
+                timestamp = timestamp[0].decode("utf-8", errors="replace")
                 when = self.convert_ldaptimestamp(timestamp)
                 if when:
                     return when
@@ -271,7 +264,7 @@ class ADApi:
             if groups:
                 groups = list(dict.fromkeys(groups))
                 for group in groups:
-                    group = group.decode("utf-8")
+                    group = group.decode("utf-8", errors="replace")
                     group = group.split(",")
                     group = group[0].split("=")
                     data.append(group[1])
@@ -285,7 +278,7 @@ class ADApi:
         try:
             count = self.get_data(con, login, "badPwdCount")
             if count:
-                count = count[0].decode("utf-8")
+                count = count[0].decode("utf-8", errors="replace")
                 if count:
                     return int(count)
             return False
@@ -296,9 +289,9 @@ class ADApi:
         try:
             timestamp = self.get_data(con, login, "badPasswordTime")
             if timestamp:
-                timestamp = timestamp[0].decode("utf-8")
+                timestamp = timestamp[0].decode("utf-8", errors="replace")
                 timestamp = (int(timestamp) / 10000000) - 11644473600
-                lastfail = datetime.datetime.fromtimestamp(timestamp)
+                lastfail = datetime.fromtimestamp(timestamp)
                 lastfail = lastfail.strftime('%H:%M:%S %d-%m-%Y')
                 if lastfail:
                     return lastfail
@@ -310,9 +303,9 @@ class ADApi:
         try:
             timestamp = self.get_data(con, login, "lastLogon")
             if timestamp:
-                timestamp = timestamp[0].decode("utf-8")
+                timestamp = timestamp[0].decode("utf-8", errors="replace")
                 timestamp = (int(timestamp) / 10000000) - 11644473600
-                lastlogin = datetime.datetime.fromtimestamp(timestamp)
+                lastlogin = datetime.fromtimestamp(timestamp)
                 lastlogin = lastlogin.strftime('%H:%M:%S %d-%m-%Y')
                 if lastlogin:
                     return lastlogin
@@ -324,9 +317,9 @@ class ADApi:
         try:
             timestamp = self.get_data(con, login, "pwdLastSet")
             if timestamp:
-                timestamp = timestamp[0].decode("utf-8")
+                timestamp = timestamp[0].decode("utf-8", errors="replace")
                 timestamp = (int(timestamp) / 10000000) - 11644473600
-                lastpwd = datetime.datetime.fromtimestamp(timestamp)
+                lastpwd = datetime.fromtimestamp(timestamp)
                 lastpwd = lastpwd.strftime('%H:%M:%S %d-%m-%Y')
                 if lastpwd:
                     return lastpwd
@@ -338,7 +331,7 @@ class ADApi:
         try:
             isadmin = self.get_data(con, login, "adminCount")
             if isadmin:
-                isadmin = isadmin[0].decode("utf-8")
+                isadmin = isadmin[0].decode("utf-8", errors="replace")
                 if int(isadmin) == 1:
                     return True
             return False
@@ -349,21 +342,20 @@ class ADApi:
         try:
             timestamp = self.get_data(con, login, "accountExpires")
             if timestamp:
-                timestamp = timestamp[0].decode("utf-8")
+                timestamp = timestamp[0].decode("utf-8", errors="replace")
                 timestamp = (int(timestamp) / 10000000) - 11644473600
-                expires = datetime.datetime.fromtimestamp(timestamp)
+                expires = datetime.fromtimestamp(timestamp)
                 expires = expires.strftime('%H:%M:%S %d-%m-%Y')
                 if expires:
                     return expires
-            return False
         except Exception as e:
-            raise Exception(f'get_expires: {e}')
+            return False
 
     def get_logincount(self, con, login):
         try:
             count = self.get_data(con, login, "logonCount")
             if count:
-                count = count[0].decode("utf-8")
+                count = count[0].decode("utf-8", errors="replace")
                 if count:
                     return int(count)
             return False
@@ -374,7 +366,7 @@ class ADApi:
         try:
             login = self.get_data(con, login, "sAMAccountName")
             if login:
-                login = login[0].decode("utf-8")
+                login = login[0].decode("utf-8", errors="replace")
                 if login:
                     return login
             return False
@@ -385,7 +377,7 @@ class ADApi:
         try:
             mobile = self.get_data(con, login, "mobile")
             if mobile:
-                mobile = mobile[0].decode("utf-8")
+                mobile = mobile[0].decode("utf-8", errors="replace")
                 if mobile:
                     return mobile
             return False
@@ -417,9 +409,7 @@ class ADApi:
         try:
             radius = self.get_denied_dialer(con, login, "sAMAccountName")
             if radius:
-                #radius = radius[0].decode("utf-8")
-                if radius:
-                    return True
+                return True
             return False
         except Exception as e:
             raise Exception(f'is_radius: {e}')

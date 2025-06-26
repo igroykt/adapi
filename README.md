@@ -26,7 +26,6 @@ CA_CERT=/usr/local/etc/ssl/ad-EXAMPLE-CA.pem
 Пример для протокола ldap:
 ```bash
 LDAP_SERVER=ldap://ad.example.com:389
-LDAP_SERVER=ldaps://ad.example.com:636
 LDAP_USER=serviceaccount
 LDAP_PASS=servicepass
 BASE_DN=dc=ad,dc=example,dc=com

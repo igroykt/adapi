@@ -9,13 +9,21 @@ from OpenSSL import crypto
 
 class ADApi:
 
-    def __init__(self):
-        self.ldap_server = config('LDAP_SERVER')
-        self.ldap_user = config('LDAP_USER')
-        self.ldap_pass = config('LDAP_PASS')
-        self.base_dn = config('BASE_DN')
-        self.search_dn = config('SEARCH_DN')
-        if self.ldap_server.lower().startswith('ldaps://'):
+    ldap_server = ""
+    ldap_user = ""
+    ldap_pass = ""
+    base_dn = ""
+    search_dn = ""
+    ca_cert = ""
+
+    def __init__(self, ldap_server, ldap_user, ldap_pass, base_dn, search_dn, ca_cert=""):
+        self.ldap_server = ldap_server
+        self.ldap_user = ldap_user
+        self.ldap_pass = ldap_pass
+        self.base_dn = base_dn
+        self.search_dn = search_dn
+        self.ca_cert = ca_cert
+        if self.ldap_server.lower().startswith('ldaps://') and not self.ca_cert:
             self.ca_cert = config('CA_CERT')
             os.environ['SSL_CERT_FILE'] = os.path.abspath(self.ca_cert)
 

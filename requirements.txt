@@ -1,3 +1,2 @@
 python-ldap
 pyopenssl
-python-decouple

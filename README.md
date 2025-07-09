@@ -17,7 +17,7 @@ pip3 install -r adapi/requirements.txt
 from adapi import ADApi
 
 adapi = ADApi(
-    ldap_server='ldaps://myserver.dc.example.com:636',
+    ldap_server='ldaps://myserver.ad.example.com:636',
     ldap_user='serviceuser',
     ldap_pass='servicepass',
     base_dn='dc=ad,dc=example,dc=com',
@@ -78,7 +78,7 @@ for dump in dumpcerts:
 * is_radius_blocked(handler, login) bool -> проверка доступа пользователя к radius серверу (True значит запрещен Dial-in)
 
 
-## Заметка для разработчиков
+## Заметка
 2 дня не мог понять в чем проблема с openldap 2.6 и openssl 3.x.
 
 Сперва получал ошибку:

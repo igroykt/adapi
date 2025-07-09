@@ -11,43 +11,42 @@ git clone https://github.com/igroykt/adapi
 pip3 install -r adapi/requirements.txt
 ```
 
-## Подправьте .env
-Для кого-то это может показаться не удобным, но это сделано чтобы ваши данные не утекли при не предвиденных ошибках.
-
-Пример для протокола ldaps:
+## Пример
+Пример инициализации для протокола ldaps:
 ```bash
-LDAP_SERVER=ldaps://ad.example.com:636
-LDAP_USER=serviceaccount
-LDAP_PASS=servicepass
-BASE_DN=dc=ad,dc=example,dc=com
-SEARCH_DN=cn=users,dc=ad,dc=example,dc=com
-CA_CERT=/usr/local/etc/ssl/ad-EXAMPLE-CA.pem
-```
-Пример для протокола ldap:
-```bash
-LDAP_SERVER=ldap://ad.example.com:389
-LDAP_USER=serviceaccount
-LDAP_PASS=servicepass
-BASE_DN=dc=ad,dc=example,dc=com
-SEARCH_DN=cn=users,dc=ad,dc=example,dc=com
-```
-
-## Инициализация
-```python
 from adapi import ADApi
 
-adapi = ADApi()
+adapi = ADApi(
+    ldap_server='ldaps://myserver.dc.example.com:636',
+    ldap_user='serviceuser',
+    ldap_pass='servicepass',
+    base_dn='dc=ad,dc=example,dc=com',
+    search_dn='cn=users,dc=ad,dc=example,dc=com',
+    ca_cert='/path/to/ca_cert.pem'
+    )
 ```
 
-## Пример
+Пример инициализации для протокола ldap:
+```bash
+from adapi import ADApi
+
+adapi = ADApi(
+    ldap_server='ldap://192.168.1.9:389',
+    ldap_user='serviceuser',
+    ldap_pass='servicepass',
+    base_dn='dc=ad,dc=example,dc=com',
+    search_dn='cn=users,dc=ad,dc=example,dc=com'
+    )
+```
+
+Пример запроса данных:
 ```python
-adapi = ADApi()
 con = adapi.connect()
 username = adapi.get_name(con, "test2")
 usermail = adapi.get_mail(con, "test2")
 dumpcerts = adapi.get_certificate(con, "test2", "dump")
 adapi.disconnect(con)
-print(f"Name: {username} Email: {usermail}")
+print(f"Name: {username}\nEmail: {usermail}")
 for dump in dumpcerts:
     print(dump)
 ```
@@ -86,7 +85,7 @@ for dump in dumpcerts:
 ```bash
 ImportError: /lib64/libldap.so.2: undefined symbol: EVP_md2, version OPENSSL_3.0.0
 ```
-Помогло обновление пакетов посредством DNF.
+Помогло обновление пакетов посредством пакетного менеджера.
 
 Далее получал ошибки связанные не то с путями, не то с OpenSSL STORE:
 ```bash
@@ -94,4 +93,4 @@ Exception: connect: {'result': -1, 'desc': "Can't contact LDAP server", 'ctrls':
 ```
 Оказалось, что путь к корневому сертификату (который CA) надо указывать через переменную окружения SSL_CERT_FILE, иначе иблиотека ldap не хавает путь.
 
-Если путь указать в месте отличном от функции __init__ (os.environ), то скрипт не будет успевать подгрузить переменную окружения по таймингу и просто будете получать ошибку аналогичную OpenSSL STORE.
+Если путь указать в месте отличном от функции __init__, то скрипт не будет успевать подгрузить переменную окружения по таймингу и просто будете получать ошибку аналогичную OpenSSL STORE.

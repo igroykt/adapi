@@ -2,7 +2,6 @@ import os
 import re
 import ldap
 import ldap.filter
-from decouple import config
 from contextlib import contextmanager
 from datetime import datetime
 from OpenSSL import crypto
@@ -24,7 +23,7 @@ class ADApi:
         self.search_dn = search_dn
         self.ca_cert = ca_cert
         if self.ldap_server.lower().startswith('ldaps://') and not self.ca_cert:
-            self.ca_cert = config('CA_CERT')
+            self.ca_cert = ca_cert
             os.environ['SSL_CERT_FILE'] = os.path.abspath(self.ca_cert)
 
     def err2dict(self, err):
